@@ -1,13 +1,5 @@
 # CryptoSpace
 Develop a responsive web application that displays real-time and historical data for selected cryptocurrencies using React, Redux, and Chart.js. The app should include multiple routes for easier navigation and feature a cryptocurrency dashboard, an overview page, and a history page.
-# React Developer Assignment - Architect  
-
-## Real-Time Cryptocurrency Dashboard with Routing and Overview  
-
-### Objective  
-Develop a responsive web application that displays real-time and historical data for selected cryptocurrencies using **React**, **Redux**, and **Chart.js**. The application includes multiple routes for easy navigation and features a cryptocurrency dashboard, an overview page, and a history page.  
-
----
 
 ## Assignment Deliverables  
 
