@@ -1,5 +1,5 @@
 # CryptoSpace
-Develop a responsive web application that displays real-time and historical data for selected cryptocurrencies using React, Redux, and Chart.js. The app should include multiple routes for easier navigation and feature a cryptocurrency dashboard, an overview page, and a history page.
+Develop a responsive web application using React, Redux, and Chart.js to display real-time and historical data for selected cryptocurrencies. The app should include multiple routes for easier navigation and feature a cryptocurrency dashboard, an overview page, and a history page.
 
 ## Assignment Deliverables  
 
@@ -89,16 +89,3 @@ Use **Redux** to manage:
 - Smooth transitions between routes.  
 
 ---
-
-## Development Plan (48 Hours)  
-
-### **Day 1**  
-#### **Hour 1–4**: Project Setup  
-1. Initialize the React project using Vite or Create React App.  
-2. Set up folder structure:  
-   - `components/`, `pages/`, `redux/`, `services/`, `styles/`  
-3. Install dependencies:  
-   ```bash  
-   npm install react-redux @reduxjs/toolkit react-router-dom chart.js react-chartjs-2 axios tailwindcss  
-
-
