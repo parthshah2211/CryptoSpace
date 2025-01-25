@@ -7,7 +7,6 @@ const LivePrice = ({ cryptoName }: { cryptoName: string }) => {
 
   useEffect(() => {
     const ws = new WebSocket(`wss://ws.coincap.io/prices?assets=${cryptoName}`);
-
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
 

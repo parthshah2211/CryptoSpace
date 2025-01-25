@@ -25,6 +25,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { useSelector } from "react-redux";
 import { getSelectedCrypto } from "../../redux/slices/selectedCryptoSlice";
+import { useCryptoDataHistory } from "../../api/cryptoAPI";
 
 ChartJS.register(
   CategoryScale,
@@ -60,8 +61,14 @@ const columns: ColumnDef<HistoryRow, any>[] = [
 ];
 
 const History: React.FC = () => {
-
   const cryptoDetail = useSelector(getSelectedCrypto);
+  const [days, setDays] = useState(15); // State to manage the number of days
+
+  const { data: cryptoDataHistory } = useCryptoDataHistory({
+    queryKey: [cryptoDetail.name, days],
+    cryptoId: cryptoDetail.name,
+    days,
+  });
   const cryptoId = cryptoDetail.name;
   const [data, setData] = useState<HistoryRow[]>([]);
   const [chartData, setChartData] = useState<any>({
@@ -84,18 +91,10 @@ const History: React.FC = () => {
       setError(null);
 
       try {
-        const response = await axios.get(
-          `https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart`,
-          {
-            params: { vs_currency: "usd", days:15 },
-          }
-        );
+        const prices: [number, number][] = cryptoDataHistory?.prices;
+        const totalVolumes: [number, number][] =
+          cryptoDataHistory.total_volumes;
 
-        // CoinGecko returns arrays for 'prices' and 'total_volumes'
-        const prices: [number, number][] = response.data.prices;
-        const totalVolumes: [number, number][] = response.data.total_volumes;
-
-        // Combine the two arrays by index
         const rows: HistoryRow[] = prices.map((entry, idx) => {
           const timestamp = entry[0];
           const price = entry[1];
@@ -108,8 +107,8 @@ const History: React.FC = () => {
           };
         });
 
-        setData(rows); 
-      const chartLabels = rows.map((r) => r.date);
+        setData(rows);
+        const chartLabels = rows.map((r) => r.date);
         const chartPrices = rows.map((r) => r.price);
         const newChartData = {
           labels: chartLabels,
@@ -134,7 +133,6 @@ const History: React.FC = () => {
 
     fetchData();
   }, [cryptoId]);
-
 
   const table = useReactTable({
     data,
@@ -161,9 +159,27 @@ const History: React.FC = () => {
   }
   return (
     <div className="p-4 bg-white shadow-md rounded">
-      <h2 className="text-2xl font-bold mb-4 capitalize">
-        {cryptoId} History (Last {15} days)
-      </h2>
+      <div className="p-4 bg-white shadow-md rounded">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold capitalize">
+            {cryptoId} History (Last {days} days)
+          </h2>
+          <div className="flex items-center gap-2">
+            <label htmlFor="daysInput" className="text-sm font-medium">
+              Days:
+            </label>
+            <input
+              id="daysInput"
+              type="number"
+              className="w-20 px-2 py-1 border rounded"
+              value={days}
+              disabled
+              onChange={(e) => setDays(Number(e?.target?.value))}
+              min="1"
+            />
+          </div>
+        </div>
+      </div>
       <div className="mb-6">
         <Line
           data={chartData}
@@ -182,7 +198,7 @@ const History: React.FC = () => {
           }}
         />
       </div>
-   <table className="table-auto w-full border border-gray-300">
+      <table className="table-auto w-full border border-gray-300">
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>

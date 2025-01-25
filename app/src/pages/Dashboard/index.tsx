@@ -6,69 +6,44 @@ import CryptoWebSocket from "../../components/CryptoTable/CryptoTable";
 import {  useSelector } from "react-redux";
 import store from "../../redux/store";
 import { getSelectedCrypto, setSelectedCrypto } from "../../redux/slices/selectedCryptoSlice";
-
-interface CryptoDetails {
-  price?: number;
-  volume?: number;
-  marketCap?: number;
-  supply?: number;
-  change?: number;
-}
+import { useCryptoDataList } from "../../api/cryptoAPI";
 
 const Dashboard = () => {
     const cryptoName = useSelector(getSelectedCrypto);
-  const [selectedCrypto, setSelectedCryptoValue] = useState<any>();
-  const [cryptoDetails, setCryptoDetails] = useState<CryptoDetails>({});
+const [selectedCryptoOption, setSelectedCryptoOption] = useState<any>();
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
-
-  
-
+  const [selectedCryptoPrice, setSelectedCryptoPrice] = useState<any>();
+   const navigate = useNavigate();
+ const {
+   data: cryptoDetails,
+ } = useCryptoDataList({
+   queryKey: ["cryptoDetail", cryptoName.name],
+   cryptoName: cryptoName.name,
+ });
 
   useEffect(() => {
-    setSelectedCryptoValue(cryptoName.name);
+    setSelectedCryptoOption({
+      label: cryptoName.name,
+      value: cryptoName.name,
+    });
   }, [cryptoName.name]);
 
   useEffect(() => {
-    if (!selectedCrypto) return;
-
-    
+    if (!selectedCryptoOption?.value) return;
     const ws = new WebSocket(
-      `wss://ws.coincap.io/prices?assets=${selectedCrypto.value}`
+      `wss://ws.coincap.io/prices?assets=${selectedCryptoOption.value}`
     );
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data[selectedCrypto.value]) {
-        setCryptoDetails((prev) => ({
-          ...prev,
-          price: parseFloat(data[selectedCrypto.value]),
-        }));
-      }
+      console.log(data, "data");
+      setSelectedCryptoPrice(parseFloat(data[selectedCryptoOption.value]));
     };
 
     ws.onerror = () => setError("WebSocket connection failed.");
 
     return () => ws.close();
-  }, [selectedCrypto]);
-
-  const fetchAdditionalDetails = async (cryptoId: string) => {
-    try {
-      const response = await axios.get(
-        `https://api.coincap.io/v2/assets/${cryptoId}`
-      );
-      const data = response.data.data;
-      setCryptoDetails((prev) => ({
-        ...prev,
-        volume: parseFloat(data.volumeUsd24Hr),
-        marketCap: parseFloat(data.marketCapUsd),
-        supply: parseFloat(data.supply),
-        change: parseFloat(data.changePercent24Hr),
-      }));
-    } catch (err) {
-      setError("Failed to fetch additional data.");
-    }
-  };
+  }, [selectedCryptoOption?.value]);
 
   const handleCryptoChange = (selectedOption: any) => {
      store.dispatch(
@@ -77,9 +52,6 @@ const Dashboard = () => {
          symbol: "",
        })
      );
-    setSelectedCryptoValue(selectedOption);
-    setCryptoDetails({});
-    fetchAdditionalDetails(selectedOption.value); 
   };
 
   const fetchCryptoOptions = async (inputValue: string) => {
@@ -102,46 +74,48 @@ const Dashboard = () => {
             cacheOptions
             defaultOptions
             loadOptions={fetchCryptoOptions}
+            value={selectedCryptoOption}
             onChange={handleCryptoChange}
             placeholder="Search and select a cryptocurrency..."
             className="w-1/2"
           />
-          {selectedCrypto && (
+          {selectedCryptoOption && (
             <div className="flex flex-col items-start">
               <p className="text-xl font-semibold">
                 Current Price:{" "}
-                {cryptoDetails.price !== undefined
-                  ? `$${cryptoDetails.price.toFixed(2)}`
+                {selectedCryptoPrice !== undefined
+                  ? `$${selectedCryptoPrice}`
                   : "Loading..."}
               </p>
               <p
                 className={`text-lg ${
-                  cryptoDetails.change && cryptoDetails.change >= 0
+                  cryptoDetails?.changePercent24Hr &&
+                  cryptoDetails?.changePercent24Hr >= 0
                     ? "text-green-600"
                     : "text-red-600"
                 }`}
               >
                 24h Change:{" "}
-                {cryptoDetails.change !== undefined
-                  ? `${cryptoDetails.change.toFixed(2)}%`
+                {cryptoDetails?.changePercent24Hr !== undefined
+                  ? `${cryptoDetails?.changePercent24Hr}%`
                   : "Loading..."}
               </p>
               <p className="text-lg">
                 Volume:{" "}
-                {cryptoDetails.volume !== undefined
-                  ? `$${(cryptoDetails.volume / 1e6).toFixed(2)}M`
+                {cryptoDetails?.volumeUsd24Hr !== undefined
+                  ? `$${cryptoDetails?.volumeUsd24Hr / 1e6}M`
                   : "Loading..."}
               </p>
               <p className="text-lg">
                 Market Cap:{" "}
-                {cryptoDetails.marketCap !== undefined
-                  ? `$${(cryptoDetails.marketCap / 1e9).toFixed(2)}B`
+                {cryptoDetails?.marketCapUsd !== undefined
+                  ? `$${parseFloat(cryptoDetails?.marketCapUsd)}B`
                   : "Loading..."}
               </p>
               <p className="text-lg">
                 Supply:{" "}
-                {cryptoDetails.supply !== undefined
-                  ? `${cryptoDetails.supply.toFixed(0)}`
+                {cryptoDetails?.supply !== undefined
+                  ? `${cryptoDetails?.supply}`
                   : "Loading..."}
               </p>
               <button

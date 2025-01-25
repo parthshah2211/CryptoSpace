@@ -7,42 +7,38 @@ interface CryptoData {
 const CryptoWebSocket = () => {
   const [cryptoPrices, setCryptoPrices] = useState<CryptoData>({});
   const [prevPrices, setPrevPrices] = useState<CryptoData>({});
+  const [newPrices, setNewPrices] = useState<CryptoData>({});
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
-    // Open WebSocket connection
     const ws = new WebSocket("wss://ws.coincap.io/prices?assets=ALL");
 
-    // Handle incoming WebSocket messages
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-
-      // Update previous prices before setting new prices
-      setPrevPrices((prev) => {
-        const updatedPrev = { ...prev };
-        Object.keys(data).forEach((key) => {
-          if (cryptoPrices[key] !== undefined) {
-            updatedPrev[key] = cryptoPrices[key];
-          }
-        });
-        return updatedPrev;
-      });
-
-      // Update current prices
+       setNewPrices(data)
       setCryptoPrices((prevPrices) => ({ ...prevPrices, ...data }));
     };
-
-    // Handle WebSocket errors
     ws.onerror = () => setError("WebSocket connection failed.");
-
-    // Cleanup WebSocket connection on component unmount
     return () => ws.close();
-  }, [cryptoPrices]);
+  }, []);
 
-  // Get the top 10 cryptocurrencies by price
+  useEffect(() => {
+    setTimeout(() => {
+        setPrevPrices((prev) => {
+          const updatedPrev = { ...prev };
+          Object.keys(newPrices).forEach((key) => {
+            if (cryptoPrices[key] !== undefined) {
+              updatedPrev[key] = cryptoPrices[key];
+            }
+          });
+          return updatedPrev;
+        });
+    }, 350);
+  
+  }, [newPrices]);
+
   const topCryptos = Object.entries(cryptoPrices)
-    .sort(([, priceA], [, priceB]) => priceB - priceA) // Sort by descending price
-    .slice(0, 10); // Take the top 10
+    .sort(([, priceA], [, priceB]) => priceB - priceA) 
+    .slice(0, 10);
 
   return (
     <div className="p-4">
@@ -62,7 +58,6 @@ const CryptoWebSocket = () => {
               prevPrice !== undefined && price > prevPrice;
             const isPriceDecreased =
               prevPrice !== undefined && price < prevPrice;
-
             return (
               <tr
                 key={name}
